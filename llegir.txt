@@ -1,2 +1,0 @@
-docker compose exec web a2enmod rewrite
-docker compose exec web service apache2 reload

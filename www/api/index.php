@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Very very simple api rest
+ * Exemple d'una API REST molts simple
  */
 
 define("ROUTE_BASE", "/api");
