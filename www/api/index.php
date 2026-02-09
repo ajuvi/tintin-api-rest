@@ -1,73 +1,75 @@
 <?php
 
-/**
- * Exemple d'una API REST molts simple
- */
-
 define("ROUTE_BASE", "/api");
 
 $metode = strtoupper($_SERVER['REQUEST_METHOD']);
-$route = str_replace(ROUTE_BASE,"",$_SERVER['REQUEST_URI']);
+$route = str_replace(ROUTE_BASE, "", $_SERVER['REQUEST_URI']);
 
 $dataset = json_decode(file_get_contents("tintin.data"));
 
-if($metode=="GET")
-{
+if($metode=="GET") {
 
-    //ruta => "/"
-    if((preg_match("#^/?$#",$route,$params) === 1))
-    {
+    // Ruta "/"
+    if(matchRoute("/", $route) !== false){
         echo "Very very simple api v0.1";
         exit(0);
-    } 
+    }
 
-    //ruta => "/hola"
-    else if((preg_match("#^/hola/?$#",$route,$params) === 1))
-    {
+    // Ruta "/hola"
+    if(matchRoute("/hola", $route) !== false){
         echo "Hola a tothom";
         exit(0);
-    } 
+    }
 
-    //ruta => /hola/{nom}
-    else if((preg_match("#^/hola/(.*)?$#",$route,$params) === 1))
-    {
-        $nom = $params[1];
+    // Ruta "/hola/{nom}"
+    if($params = matchRoute("/hola/{nom}", $route)){
+        $nom = $params[0];
         writeDataToJson("Hola $nom");
-    } 
+    }
 
-    //ruta => /tintin
-    if((preg_match("#^/tintin/?$#",$route,$params) === 1))
-    {
+    // Ruta "/tintin"
+    if(matchRoute("/tintin", $route) !== false){
         writeDataToJson($dataset);
     }
 
-    //ruta => /tintin/{id}
-    if((preg_match("#^/tintin/([0-9]+)?$#",$route,$params) === 1))
-    {
-        $id = $params[1];
+    // Ruta "/tintin/{id}"
+    if($params = matchRoute("/tintin/{id}", $route)){
+        $id = $params[0];
         foreach($dataset as $item){
             if($item->id==$id){
                 writeDataToJson($item);
             }
         }
-        echo "null";
-        exit(0);
+        
+        writeDataToJson(null);
     }
 }
 
-if($metode=="POST")
-{
-    //not implemented yed.
+
+if($metode=="POST"){
+    // not implemented yet
 }
 
-if($metode=="PUT")
-{
-    //not implemented yed.
+if($metode=="PUT"){
+    // not implemented yet
 }
 
-if($metode=="DELETE")
-{
-    //not implemented yed.
+if($metode=="DELETE"){
+    // not implemented yet
+}
+
+
+// Funcions auxiliars
+function matchRoute($pattern, $route) {
+    $regex = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\}#', '([^/]+)', $pattern);
+    $regex = "#^" . trim($regex, "/") . "/?$#"; 
+    $route = trim($route, "/");
+
+    if (preg_match($regex, $route, $matches)) {
+        array_shift($matches);
+        return $matches;
+    }
+    return false;
 }
 
 function writeDataToJson($data){
