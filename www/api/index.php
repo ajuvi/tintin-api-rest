@@ -1,78 +1,72 @@
 <?php
 
+require_once("App.php");
+
 define("ROUTE_BASE", "/api");
 
-$metode = strtoupper($_SERVER['REQUEST_METHOD']);
-$route = str_replace(ROUTE_BASE, "", $_SERVER['REQUEST_URI']);
+// Classe auxiliar Path per obtenir la ruta actual
+class Path {
+    public static function route(){
+        $route = str_replace(ROUTE_BASE, "", $_SERVER['REQUEST_URI']);
+        return rtrim(parse_url($route, PHP_URL_PATH), "/");
+    }
+}
 
+$app = new App();
+
+// Carregar dataset
 $dataset = json_decode(file_get_contents("tintin.data"));
 
-if($metode=="GET") {
+/**
+ * GET /
+ */
+$app->get("/", function(){
+    echo "Very very simple api v0.1";
+});
 
-    // Ruta "/"
-    if(matchRoute("/", $route) !== false){
-        echo "Very very simple api v0.1";
-        exit(0);
-    }
+/**
+ * GET /hola
+ */
+$app->get("/hola", function(){
+    echo "Hola a tothom";
+});
 
-    // Ruta "/hola"
-    if(matchRoute("/hola", $route) !== false){
-        echo "Hola a tothom";
-        exit(0);
-    }
+/**
+ * GET /hola/{nom}
+ */
+$app->get("/hola/{nom}", function(){
+    $nom = App::param("nom");
+    App::response_json("Hola $nom");
+});
 
-    // Ruta "/hola/{nom}"
-    if($params = matchRoute("/hola/{nom}", $route)){
-        $nom = $params[0];
-        writeDataToJson("Hola $nom");
-    }
+/**
+ * GET /tintin
+ */
+$app->get("/tintin", function() use ($dataset){
+    App::response_json($dataset);
+});
 
-    // Ruta "/tintin"
-    if(matchRoute("/tintin", $route) !== false){
-        writeDataToJson($dataset);
-    }
+/**
+ * GET /tintin/{id}
+ */
+$app->get("/tintin/{id}", function() use ($dataset){
+    $id = App::param("id");
 
-    // Ruta "/tintin/{id}"
-    if($params = matchRoute("/tintin/{id}", $route)){
-        $id = $params[0];
-        foreach($dataset as $item){
-            if($item->id==$id){
-                writeDataToJson($item);
-            }
+    foreach($dataset as $item){
+        if($item->id == $id){
+            App::response_json($item);
         }
-        
-        writeDataToJson(null);
     }
-}
 
+    App::response_json(null);
+});
 
-if($metode=="POST"){
-    // not implemented yet
-}
+/**
+ * Ruta per defecte
+ */
+$app->get("default", function(){
+    http_response_code(404);
+    App::response_json(["error" => "Ruta no trobada"]);
+});
 
-if($metode=="PUT"){
-    // not implemented yet
-}
-
-if($metode=="DELETE"){
-    // not implemented yet
-}
-
-// Funcions auxiliars
-function matchRoute($pattern, $route) {
-    $regex = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\}#', '([^/]+)', $pattern);
-    $regex = "#^" . trim($regex, "/") . "/?$#"; 
-    $route = trim($route, "/");
-
-    if (preg_match($regex, $route, $matches)) {
-        array_shift($matches);
-        return $matches;
-    }
-    return false;
-}
-
-function writeDataToJson($data){
-    header('Content-Type: application/json');
-    echo json_encode($data, JSON_UNESCAPED_UNICODE);
-    exit(0);
-}
+$app->run();
