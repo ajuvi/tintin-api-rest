@@ -1,6 +1,0 @@
-# engegar els contenidors
-docker compose up -d 
-
-# activar el modul rewrite i reiniciar l'apache
-docker compose exec web a2enmod rewrite
-docker compose exec web service apache2 reload
